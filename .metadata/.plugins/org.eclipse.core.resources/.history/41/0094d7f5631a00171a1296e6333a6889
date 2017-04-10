@@ -1,0 +1,31 @@
+package test_connect;
+
+import java.awt.image.BufferedImage;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+import javax.imageio.ImageIO;
+
+public class ImageServer {
+    public static void main(String[] args){
+        ServerSocket ss =null;
+        try {
+            ss=new ServerSocket(5301);
+            Socket socket=ss.accept();
+            
+            InputStream is =socket.getInputStream();
+            BufferedImage bimg=ImageIO.read(is);
+            FileOutputStream fout=new FileOutputStream("/img/upload.jpg");
+            ImageIO.write(bimg, "jpg", fout);
+            
+            fout.close();
+        
+            System.out.println("서버 :이미지 수신 및 파일에 저장 완료");
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}

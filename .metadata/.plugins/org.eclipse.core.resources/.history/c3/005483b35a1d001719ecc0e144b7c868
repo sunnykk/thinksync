@@ -1,0 +1,103 @@
+package test_connect;
+
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+
+public class fileServer2 {
+
+	public static void main(String[] args){
+		
+		int PORT = 5501;
+		
+		ServerSocket serverSocket = null;
+		Socket socket = null;
+		
+		try{
+			serverSocket = new ServerSocket(PORT);
+			
+			while(true){
+				System.out.println("연결대기중----");
+				
+				socket = serverSocket.accept();
+				
+				Receiver receiver = new Receiver(socket);
+				receiver.start();
+			}
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+	}
+}
+
+class Receiver extends Thread{
+	
+	Socket socket;
+	DataInputStream dis = null;
+	FileOutputStream fos = null;
+	BufferedOutputStream bos = null;
+	
+	public Receiver(Socket socket){
+		this.socket=socket;
+	}
+	
+	public void run(){
+		
+		try{
+			dis = new DataInputStream(socket.getInputStream());
+			String type = dis.readUTF();
+			
+			if(type.equals("file")){
+				String result = fileWrite(dis);
+				System.out.println("결과 "+result);
+			}
+			else if(type.equals("msg")){
+				
+			}
+		}catch(IOException e){
+			System.out.println("run() Failed!");
+			e.printStackTrace();
+		}
+	}
+	
+	private String fileWrite(DataInputStream dis){
+		String result=null;;
+		String filePath="C:/Users/sun/Desktop/new_work/test_connect/src/test_connect";
+		
+		try{
+			String fileName = dis.readUTF();
+			System.out.println("파일명 :  "+fileName+"받음");
+			
+			File file = new File(filePath+"/"+fileName);
+			fos = new FileOutputStream(file);
+			bos = new BufferedOutputStream(fos);
+			System.out.println(fileName+"파일생성");
+			
+			int len;
+			int size = 4096;
+			byte[] data = new byte[size];
+			while((len=dis.read(data))!= -1){
+				bos.write(data,0,len);
+			}
+			//bos.flush();
+			result = "SUCCESS";
+			
+			System.out.println("파일수신 완료. 사이즈:"+file.length());
+		}catch(IOException e){
+			e.printStackTrace();
+		}finally{
+	    	try{bos.close();}catch(IOException e){e.printStackTrace();}
+	    	try{fos.close();}catch(IOException e){e.printStackTrace();}
+	    	try{dis.close();}catch(IOException e){e.printStackTrace();}
+	    }
+		return result;
+	}
+	
+}//Reciever 끝
+
+

@@ -1,0 +1,124 @@
+package test_connect;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+import javax.imageio.ImageIO;
+
+import java.awt.image.BufferedImage;
+import java.io.FileOutputStream;
+
+
+
+public class SimpleServer {
+
+	public static void main(String[] args) throws IOException{
+
+		SimpleServer ss = new SimpleServer();
+		ss.ServerRun();
+	}
+
+	public void ServerRun() throws IOException{
+
+		ServerSocket server = null;
+		int port = 5501;
+		Socket socket = null;
+
+		//데이터를 전달 받는 스트림
+		InputStream is = null;
+		InputStreamReader isr = null;
+		BufferedReader br = null;
+		
+		String data;
+
+		//이미지를 읽기고 저장하기 위한 버퍼, 스트림
+		BufferedImage bimg = null;
+		FileOutputStream fout=null;
+
+		try{
+			
+			//서버소켓 생성
+			server = new ServerSocket(port);
+			
+			//반복하면서 클라이언트의 접속 기다림
+			while(true){
+				System.out.println("-------접속 대기중------");
+				socket = server.accept();         // 클라이언트가 접속하면 통신할 수 있는 소켓 반환
+				System.out.println(socket.getInetAddress() + "로 부터 연결요청이 들어옴");
+
+				is = socket.getInputStream();
+
+				if( bimg == ImageIO.read(is) )
+				{
+					isr = new InputStreamReader(is);
+					br = new BufferedReader(isr);
+					// 클라이언트로부터 데이터를 받기 위한 InputStream 선언
+
+					data=null;
+					data=br.readLine();
+					System.out.println("클라이언트로 부터 받은 데이터:" + data);
+
+					receiveData(data, socket);         // 받은 데이터를 그대로 다시 보내기
+					System.out.println("***** 전송 완료  *****");
+				}
+				else
+				{
+					bimg = ImageIO.read(is);
+					fout = new FileOutputStream("upload.jpg");
+					ImageIO.write(bimg, "jpg", fout);
+
+					fout.close();
+
+					System.out.println("서버 :이미지 수신 및 파일에 저장 완료");
+				}
+
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+		}finally {
+			try{
+				br.close();
+				isr.close();
+				is.close();
+				server.close();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+	}
+
+
+	public void receiveData(String data, Socket socket){
+		OutputStream os = null;
+		OutputStreamWriter osw = null;
+		BufferedWriter bw = null;
+
+		try{
+			os = socket.getOutputStream();
+			osw = new OutputStreamWriter(os);
+			bw = new BufferedWriter(osw);
+			// 클라이언트로부터 데이터를 보내기 위해 OutputStream 선언
+
+			bw.write(data);            // 클라이언트로 데이터 전송
+			bw.flush();
+		}catch(Exception e1){
+			e1.printStackTrace();
+		}finally {
+			try{
+				bw.close();
+				osw.close();
+				os.close();
+				socket.close();
+			}catch(Exception e1){
+				e1.printStackTrace();
+			}
+		}
+	}    
+}
